@@ -1,7 +1,7 @@
 # Chess AI Implementation Project
 
 screenshot of functional movelist and starting board
-![Scrot](https://cdn.discordapp.com/attachments/823998092768575541/1305741517746339890/image.png)
+![Scrot](https://raw.githubusercontent.com/zaphodgjd/class-chess-123/main/scrot.png)
 
 ![Chess Board](https://raw.githubusercontent.com/zaphodgjd/class-chess-123/main/chess/w_king.png)
 
