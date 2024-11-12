@@ -1,5 +1,8 @@
 # Chess AI Implementation Project
 
+screenshot of functional movelist and starting board
+![Scrot](https://cdn.discordapp.com/attachments/823998092768575541/1305741517746339890/image.png)
+
 ![Chess Board](https://raw.githubusercontent.com/zaphodgjd/class-chess-123/main/chess/w_king.png)
 
 ## 🎯 Project Overview
@@ -124,8 +127,7 @@ Students are encouraged to:
 This project is licensed under the MIT License.
 
 ## 👥 Contributors
-- [Your Name] - Initial work
-- [Student Names] - Implementation and testing
+- Preston Clayton - Implementation and testing
 
 ## 🙏 Acknowledgments
 - Chess piece sprites from [Wikipedia](https://en.wikipedia.org/wiki/Chess_piece)
