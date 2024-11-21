@@ -9,10 +9,10 @@ const int White = 0;
 const int Black = 128;
 
 enum CastleStatus {
-  Q = 1,
-  K = 2,
-  q = 4,
-  k = 8,
+  K = 1,
+  Q = 2,
+  k = 4,
+  q = 8,
 };
 
 enum ChessPiece {

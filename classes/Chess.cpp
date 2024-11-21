@@ -93,7 +93,7 @@ void Chess::setUpBoard() {
     }
   }
 
-  setGameFromFEN("5k2/8/8/8/8/8/8/4K2R w K - 0 1");
+  setGameFromFEN("r3k2r/1b4bq/8/8/8/8/7B/R3K2R w KQk - 0 1");
   _state = stateString();
 
   GenerateMoves(getCurrentPlayer()->playerNumber());
@@ -352,12 +352,23 @@ void Chess::GenerateCastlingMoves(int start_index, int tag) {
     }
   }
 }
+
 //
 // about the only thing we need to actually fill out for tic-tac-toe
 //
 bool Chess::actionForEmptyHolder(BitHolder &holder) { return false; }
 
-bool Chess::canBitMoveFrom(Bit &bit, BitHolder &src) { return true; }
+bool Chess::canBitMoveFrom(Bit &bit, BitHolder &src) {
+  ChessSquare &src_Square = static_cast<ChessSquare &>(src);
+  int src_index = src_Square.getSquareIndex();
+
+  for (auto move : _moves) {
+    if (move.StartSquare == src_index)
+      return true;
+  }
+
+  return false;
+}
 
 bool Chess::canBitMoveFromTo(Bit &bit, BitHolder &src, BitHolder &dst) {
   ChessSquare &src_Square = static_cast<ChessSquare &>(src);
@@ -368,16 +379,18 @@ bool Chess::canBitMoveFromTo(Bit &bit, BitHolder &src, BitHolder &dst) {
 
   Move target = {src_index, dst_index};
 
-  for (const auto &move : _moves) {
-    if (move == target) {
-      return true;
-    }
-  }
-  return false;
+  return std::find(_moves.begin(), _moves.end(), target) != _moves.end();
 }
 
 void Chess::bitMovedFromTo(Bit &bit, BitHolder &src, BitHolder &dst) {
-  updateExtrinsicState(src, dst);
+  /*updateExtrinsicState(src, dst);*/
+  ChessSquare &src_Square = static_cast<ChessSquare &>(src);
+  ChessSquare &dst_Square = static_cast<ChessSquare &>(dst);
+
+  _state[src_Square.getSquareIndex()] = '0';
+  _state[dst_Square.getSquareIndex()] =
+      bitToPieceNotation(dst_Square.getRow(), dst_Square.getColumn());
+
   endTurn();
   GenerateMoves(getCurrentPlayer()->playerNumber());
 }
@@ -515,11 +528,14 @@ void Chess::setGameFromFEN(const std::string &string) {
   if (castle[0] != '-') {
     if (castle.find('K') != std::string::npos) {
       _castle_status |= CastleStatus::K;
-    } else if (castle.find('Q') != std::string::npos) {
+    }
+    if (castle.find('Q') != std::string::npos) {
       _castle_status |= CastleStatus::Q;
-    } else if (castle.find('k') != std::string::npos) {
+    }
+    if (castle.find('k') != std::string::npos) {
       _castle_status |= CastleStatus::k;
-    } else if (castle.find('q') != std::string::npos) {
+    }
+    if (castle.find('q') != std::string::npos) {
       _castle_status |= CastleStatus::q;
     }
   }
