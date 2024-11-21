@@ -29,6 +29,37 @@ std::vector<std::string> split(const std::string &s, char delim) {
 }
 
 ChessPiece getPiece(int tag) { return ChessPiece(tag & 127); }
+ChessPiece char_to_piece(char piece) {
+  const char *wpieces = "?PNBRQK";
+  const char *bpieces = "?pnbrqk";
+
+  for (int i = 0; wpieces[i] != '\0'; i++) {
+    if (wpieces[i] == piece) {
+      return (enum ChessPiece)i;
+    }
+  }
+
+  for (int i = 0; bpieces[i] != '\0'; i++) {
+    if (bpieces[i] == piece) {
+      return (enum ChessPiece)i;
+    }
+  }
+
+  return NoPiece;
+}
+
+bool is_white(char piece) {
+  const char *wpieces = "?PNBRQK";
+
+  for (int i = 0; wpieces[i] != '\0'; i++) {
+    if (wpieces[i] == piece) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 bool isSlidingPiece(ChessPiece piece) {
   return piece == Bishop || piece == Rook || piece || Queen;
 }
@@ -133,31 +164,26 @@ constexpr auto squares_to_edge = setup_squares_to_edge();
 void Chess::GenerateMoves(int playerNumber) {
   _moves.clear();
   for (int i = 0; i < 64; i++) {
-    Bit *bit = _grid[i / 8][i % 8].bit();
-    if (!bit)
+    if ((getCurrentPlayer()->playerNumber() == 0) != is_white(_state[i]))
       continue;
 
-    int tag = bit->gameTag();
-    if (getCurrentPlayer()->playerNumber() != getPlayerNumber(tag))
-      continue;
-
-    ChessPiece piece = getPiece(tag);
+    ChessPiece piece = char_to_piece(_state[i]);
     switch (piece) {
     case NoPiece:
-      exit(1);
+      continue;
     case Pawn:
-      GeneratePawnMoves(i, tag);
+      GeneratePawnMoves(i);
       break;
     case Knight:
-      GenerateKnightMoves(i, tag);
+      GenerateKnightMoves(i);
       break;
     case Bishop:
     case Rook:
     case Queen:
-      GenerateSlidingMoves(i, tag);
+      GenerateSlidingMoves(i);
       break;
     case King:
-      GenerateKingMoves(i, tag);
+      GenerateKingMoves(i);
       break;
     default:
       break;
@@ -383,13 +409,21 @@ bool Chess::canBitMoveFromTo(Bit &bit, BitHolder &src, BitHolder &dst) {
 }
 
 void Chess::bitMovedFromTo(Bit &bit, BitHolder &src, BitHolder &dst) {
-  /*updateExtrinsicState(src, dst);*/
   ChessSquare &src_Square = static_cast<ChessSquare &>(src);
   ChessSquare &dst_Square = static_cast<ChessSquare &>(dst);
 
+  int src_index = src_Square.getSquareIndex();
+  int dst_index = dst_Square.getSquareIndex();
+
+  Move target = {src_index, dst_index};
+
+  int row = dst_Square.getRow();
+  int col = dst_Square.getColumn();
+
+  updateExtrinsicState(target); // do we update castling and enpassant based on
+                                // pre move state or post?
   _state[src_Square.getSquareIndex()] = '0';
-  _state[dst_Square.getSquareIndex()] =
-      bitToPieceNotation(dst_Square.getRow(), dst_Square.getColumn());
+  _state[dst_Square.getSquareIndex()] = bitToPieceNotation(row, col);
 
   endTurn();
   GenerateMoves(getCurrentPlayer()->playerNumber());
@@ -443,39 +477,36 @@ void Chess::disableCastlability(bool is_white, bool kingside) {
   }
 }
 
-void Chess::updateExtrinsicState(BitHolder &src, BitHolder &dst) {
-  int tag =
-      src.bit()->gameTag(); // src bit always has a tag
-                            // but is src what moved?
-                            // needa restart a lot of this from the beginning
-  ChessSquare &src_Square = static_cast<ChessSquare &>(src);
-  ChessSquare &dst_Square = static_cast<ChessSquare &>(dst);
+// this is where we handle castling and en passant
+void Chess::updateExtrinsicState(Move move) {
+
   // disable ability to castle once rook has been moved
-  if (getPiece(tag) == ChessPiece::Rook) {
-    bool moved_kingside =
-        src_Square.getSquareIndex() == (isWhite(tag) ? 7 : 63);
-    if (moved_kingside && canCastle(isWhite(tag), true)) {
-      disableCastlability(isWhite(tag), true);
-    }
-    bool moved_queenside =
-        src_Square.getSquareIndex() == (isWhite(tag) ? 0 : 56);
-    if (moved_queenside && canCastle(isWhite(tag), false)) {
-      disableCastlability(isWhite(tag), false);
-    }
-  }
-
-  // if king moved at all disable all castling for that side
-  // fmkcl
-  if (getPiece(tag) == ChessPiece::King) {
-    disableCastlability(isWhite(tag));
-
-    if (src_Square.getDistance(dst_Square) >= 2) {
-      // if king moved two spaces move corresponding rook
-    }
-  }
+  /*if (getPiece(tag) == ChessPiece::Rook) {*/
+  /*  bool moved_kingside =*/
+  /*      src_Square.getSquareIndex() == (isWhite(tag) ? 7 : 63);*/
+  /*  if (moved_kingside && canCastle(isWhite(tag), true)) {*/
+  /*    disableCastlability(isWhite(tag), true);*/
+  /*  }*/
+  /*  bool moved_queenside =*/
+  /*      src_Square.getSquareIndex() == (isWhite(tag) ? 0 : 56);*/
+  /*  if (moved_queenside && canCastle(isWhite(tag), false)) {*/
+  /*    disableCastlability(isWhite(tag), false);*/
+  /*  }*/
+  /*}*/
+  /**/
+  /*// if king moved at all disable all castling for that side*/
+  /*// fmkcl*/
+  /*if (getPiece(tag) == ChessPiece::King) {*/
+  /*  disableCastlability(isWhite(tag));*/
+  /**/
+  /*  if (src_Square.getDistance(dst_Square) >= 2) {*/
+  /*    // if king moved two spaces move corresponding rook*/
+  /*  }*/
+  /*}*/
 
   return;
 }
+
 const char Chess::bitToPieceNotation(int row, int column) const {
   if (row < 0 || row >= 8 || column < 0 || column >= 8) {
     return '0';
@@ -586,9 +617,6 @@ void Chess::setBoardFromFEN(const std::string &string) {
       }
       string_pos++;
     }
-  }
-
-  if (string_pos < string.length()) {
   }
 }
 

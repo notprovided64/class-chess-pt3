@@ -83,7 +83,7 @@ private:
   void GeneratePawnMoves(int start_index, int tag);
   void GenerateKingMoves(int start_index, int tag);
   void GenerateCastlingMoves(int start_index, int tag);
-  void updateExtrinsicState(BitHolder &src, BitHolder &dst);
+  void updateExtrinsicState(Move move);
   bool canCastle(bool is_white, bool kingside);
   void disableCastlability(bool is_white, bool kingside);
   void disableCastlability(bool is_white);
