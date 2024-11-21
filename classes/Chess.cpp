@@ -1,7 +1,11 @@
 #include "Chess.h"
 #include <array>
 #include <cstdio>
+#include <cstdlib>
 #include <ctype.h>
+#include <iostream>
+#include <sstream>
+#include <stdlib.h>
 #include <string>
 #include <tuple>
 #include <unordered_map>
@@ -10,6 +14,27 @@
 
 const int AI_PLAYER = 1;
 const int HUMAN_PLAYER = -1;
+
+// should realistically be in a different file
+std::vector<std::string> split(const std::string &s, char delim) {
+  std::vector<std::string> result;
+  std::stringstream ss(s);
+  std::string item;
+
+  while (getline(ss, item, delim)) {
+    result.push_back(item);
+  }
+
+  return result;
+}
+
+ChessPiece getPiece(int tag) { return ChessPiece(tag & 127); }
+bool isSlidingPiece(ChessPiece piece) {
+  return piece == Bishop || piece == Rook || piece || Queen;
+}
+
+int getPlayerNumber(int tag) { return tag < 128 ? 0 : 1; }
+bool isWhite(int tag) { return getPlayerNumber(tag) == 0; }
 
 std::string movesToString(const std::vector<Move> &moves) {
   std::ostringstream oss;
@@ -68,17 +93,11 @@ void Chess::setUpBoard() {
     }
   }
 
-  setBoardFromFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR");
-  /*setBoardFromFEN("rnbqkbnr/8/8/8/8/8/8/RNBQKBNR");*/
+  setGameFromFEN("5k2/8/8/8/8/8/8/4K2R w K - 0 1");
+  _state = stateString();
+
   GenerateMoves(getCurrentPlayer()->playerNumber());
 }
-
-ChessPiece getPiece(int tag) { return ChessPiece(tag & 127); }
-bool isSlidingPiece(ChessPiece piece) {
-  return piece == Bishop || piece == Rook || piece || Queen;
-}
-
-int getPlayerNumber(int tag) { return tag < 128 ? 0 : 1; }
 
 const int directional_offsets[] = {8, -8, -1, 1, 7, -7, 9, -9};
 
@@ -151,14 +170,14 @@ void Chess::GeneratePawnMoves(int start_index, int tag) {
   int west_free = squares_to_edge[start_index][2];
   int east_free = squares_to_edge[start_index][3];
 
-  int playerNumber = getPlayerNumber(tag);
-  int baseMovementOffset = playerNumber == 0 ? 8 : -8;
-  int extendedMovementOffset = playerNumber == 0 ? 16 : -16;
-  int captureOffsetWest = playerNumber == 0 ? 7 : -9;
-  int captureOffsetEast = playerNumber == 0 ? 9 : -7;
-  int freeMoveSquares = playerNumber == 0 ? north_free : south_free;
+  bool is_white = isWhite(tag);
+  int baseMovementOffset = is_white ? 8 : -8;
+  int extendedMovementOffset = is_white ? 16 : -16;
+  int captureOffsetWest = is_white ? 7 : -9;
+  int captureOffsetEast = is_white ? 9 : -7;
+  int freeMoveSquares = is_white ? north_free : south_free;
 
-  int startingRank = playerNumber == 0 ? 1 : 6;
+  int startingRank = is_white ? 1 : 6;
   bool inStartingRank = start_index / 8 == startingRank;
 
   if (freeMoveSquares < 1)
@@ -196,6 +215,8 @@ void Chess::GeneratePawnMoves(int start_index, int tag) {
 void Chess::GenerateSlidingMoves(int start_index, int tag) {
   int start_dir_index = (getPiece(tag) == Bishop) ? 4 : 0;
   int end_dir_index = (getPiece(tag) == Rook) ? 4 : 8;
+
+  // add check for castling tag
 
   for (int dir_index = start_dir_index; dir_index < end_dir_index;
        dir_index++) {
@@ -268,6 +289,8 @@ void Chess::GenerateKnightMoves(int start_index, int tag) {
   }
 }
 
+/*void Chess::tryAddMove(int start_index, int end_index) {}*/
+
 void Chess::GenerateKingMoves(int start_index, int tag) {
   auto tryAddMove = [&](int offset) {
     int target_index = start_index + offset;
@@ -278,9 +301,54 @@ void Chess::GenerateKingMoves(int start_index, int tag) {
     }
   };
 
+  int startingRank = getPlayerNumber(tag) == 0 ? 0 : 7;
+
+  //[2] and [3] are west and east
+
   for (int dir = 0; dir < 8; ++dir) {
     if (squares_to_edge[start_index][dir] >= 1) {
       tryAddMove(directional_offsets[dir]);
+    }
+  }
+
+  GenerateCastlingMoves(start_index, tag);
+}
+void Chess::GenerateCastlingMoves(int start_index, int tag) {
+  auto tryAddMove = [&](bool isRight) {
+    int limit = isRight ? 2 : 3;
+    for (int i = 0; i < limit; i++) {
+      int target_index = isRight ? start_index + i : start_index - i;
+      Bit *target_bit = _grid[target_index / 8][target_index % 8].bit();
+      if (target_bit)
+        return;
+    }
+
+    int target_index = isRight ? start_index + 3 : start_index - 4;
+    Bit *target_bit = _grid[target_index / 8][target_index % 8].bit();
+    if (target_bit && getPiece(target_bit->gameTag()) == ChessPiece::Rook)
+      _moves.push_back(
+          Move{start_index, isRight ? target_index + 2 : target_index - 2});
+  };
+
+  bool is_white = isWhite(tag);
+  int piece_index = is_white ? 4 : 60;
+
+  if (piece_index != start_index)
+    return;
+
+  if (is_white) {
+    if (_castle_status & CastleStatus::K) {
+      tryAddMove(true);
+    }
+    if (_castle_status & CastleStatus::Q) {
+      tryAddMove(false);
+    }
+  } else {
+    if (_castle_status & CastleStatus::k) {
+      tryAddMove(true);
+    }
+    if (_castle_status & CastleStatus::q) {
+      tryAddMove(false);
     }
   }
 }
@@ -309,6 +377,7 @@ bool Chess::canBitMoveFromTo(Bit &bit, BitHolder &src, BitHolder &dst) {
 }
 
 void Chess::bitMovedFromTo(Bit &bit, BitHolder &src, BitHolder &dst) {
+  updateExtrinsicState(src, dst);
   endTurn();
   GenerateMoves(getCurrentPlayer()->playerNumber());
 }
@@ -328,11 +397,72 @@ bool Chess::checkForDraw() {
   return false;
 }
 
+bool Chess::canCastle(bool is_white, bool kingside) {
+  if (_castle_status == 0)
+    return false;
+  else if (is_white) {
+    if (_castle_status & CastleStatus::K && kingside)
+      return true;
+    if (_castle_status & CastleStatus::Q && !kingside)
+      return true;
+  } else {
+    if (_castle_status & CastleStatus::k && kingside)
+      return true;
+    if (_castle_status & CastleStatus::q && !kingside)
+      return true;
+  }
+}
+
 //
 // add a helper to Square so it returns out FEN chess notation in the form p
 // for white pawn, K for black king, etc. this version is used from the top
 // level board to record moves
 //
+void Chess::disableCastlability(bool is_white) {
+  // fmkcl
+  _castle_status &= is_white ? ~(K | Q) : ~(k | q);
+}
+void Chess::disableCastlability(bool is_white, bool kingside) {
+  if (is_white) {
+    _castle_status ^= kingside ? K : Q;
+  } else {
+    _castle_status ^= kingside ? k : q;
+  }
+}
+
+void Chess::updateExtrinsicState(BitHolder &src, BitHolder &dst) {
+  int tag =
+      src.bit()->gameTag(); // src bit always has a tag
+                            // but is src what moved?
+                            // needa restart a lot of this from the beginning
+  ChessSquare &src_Square = static_cast<ChessSquare &>(src);
+  ChessSquare &dst_Square = static_cast<ChessSquare &>(dst);
+  // disable ability to castle once rook has been moved
+  if (getPiece(tag) == ChessPiece::Rook) {
+    bool moved_kingside =
+        src_Square.getSquareIndex() == (isWhite(tag) ? 7 : 63);
+    if (moved_kingside && canCastle(isWhite(tag), true)) {
+      disableCastlability(isWhite(tag), true);
+    }
+    bool moved_queenside =
+        src_Square.getSquareIndex() == (isWhite(tag) ? 0 : 56);
+    if (moved_queenside && canCastle(isWhite(tag), false)) {
+      disableCastlability(isWhite(tag), false);
+    }
+  }
+
+  // if king moved at all disable all castling for that side
+  // fmkcl
+  if (getPiece(tag) == ChessPiece::King) {
+    disableCastlability(isWhite(tag));
+
+    if (src_Square.getDistance(dst_Square) >= 2) {
+      // if king moved two spaces move corresponding rook
+    }
+  }
+
+  return;
+}
 const char Chess::bitToPieceNotation(int row, int column) const {
   if (row < 0 || row >= 8 || column < 0 || column >= 8) {
     return '0';
@@ -363,6 +493,49 @@ void Chess::setPieceAt(int rank, int file, int playerNumber, ChessPiece piece) {
   _grid[rank][file].setNotation(piece_str);
 }
 
+void Chess::setGameFromFEN(const std::string &string) {
+  std::vector<std::string> tokens = split(string, ' ');
+  if (tokens.size() == 0 || (tokens.size() != 1 && tokens.size() != 6)) {
+    fprintf(stderr, "invalid fen string\n");
+    exit(1);
+  }
+
+  setBoardFromFEN(tokens[0]);
+  if (tokens.size() != 6) {
+    return;
+  }
+
+  std::string player = tokens[1];
+  if (player.find('b') != std::string::npos) {
+    _gameOptions.currentTurnNo += 1;
+  }
+
+  std::string castle = tokens[2];
+  _castle_status = 0;
+  if (castle[0] != '-') {
+    if (castle.find('K') != std::string::npos) {
+      _castle_status &= CastleStatus::K;
+    } else if (castle.find('Q') != std::string::npos) {
+      _castle_status &= CastleStatus::Q;
+    } else if (castle.find('k') != std::string::npos) {
+      _castle_status &= CastleStatus::k;
+    } else if (castle.find('q') != std::string::npos) {
+      _castle_status &= CastleStatus::q;
+    }
+  }
+
+  std::string enpas = tokens[3];
+  if (enpas[0] != '-') {
+    int file = enpas[0] - 'a';
+    int rank = enpas[0] - '0';
+
+    _enpas_index = rank * 8 + file;
+  }
+
+  int full_turn = std::stoi(tokens[5]);
+  _gameOptions.currentTurnNo += (full_turn - 1) * 2;
+}
+
 void Chess::setBoardFromFEN(const std::string &string) {
   std::unordered_map<char, std::pair<int, ChessPiece>> fenToPiece = {
       {'p', {1, ChessPiece::Pawn}},   {'n', {1, ChessPiece::Knight}},
@@ -374,8 +547,12 @@ void Chess::setBoardFromFEN(const std::string &string) {
 
   int file = 0, rank = 7;
 
+  // parse piece placement
+  size_t string_pos = 0;
   for (const char &c : string) {
-    if (c == '/') {
+    if (c == ' ') {
+      break;
+    } else if (c == '/') {
       file = 0;
       rank--;
     } else if (isdigit(c)) {
@@ -391,7 +568,11 @@ void Chess::setBoardFromFEN(const std::string &string) {
       } else {
         printf("what the flip\n");
       }
+      string_pos++;
     }
+  }
+
+  if (string_pos < string.length()) {
   }
 }
 
@@ -408,18 +589,23 @@ std::string Chess::stateString() {
   std::string s;
   for (int y = 0; y < _gameOptions.rowY; y++) {
     for (int x = 0; x < _gameOptions.rowX; x++) {
-      /*s += bitToPieceNotation(y, x);*/
-      // remove below this later
-      //
-      if (Bit *bit = _grid[y][x].bit()) {
-        s += std::to_string(bit->gameTag());
-      } else {
-        s += 'x';
-      }
-      s += " ";
+      s += bitToPieceNotation(y, x);
     }
   }
   return s;
+}
+
+std::string Chess::stateStringPretty() {
+  std::string s = _state;
+  std::stringstream ss;
+
+  for (int i = 0; i < s.size(); ++i) {
+    if (i % 8 == 0 && i != 0)
+      ss << '\n';
+    ss << s[i];
+  }
+
+  return ss.str();
 }
 
 //

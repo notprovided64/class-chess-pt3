@@ -31,7 +31,9 @@ void RenderGame() {
   ImGui::Begin("Settings");
   ImGui::Text("Current Player Number: %d",
               game->getCurrentPlayer()->playerNumber());
-  ImGui::Text("Current BoardState: %s", game->stateString().c_str());
+  ImGui::Text("Current BoardState: \n%s", game->stateStringPretty().c_str());
+  ImGui::Text("Castling State: %d", game->getCS());
+  ImGui::Text("Enpas Index: %d", game->getEnpasIndex());
   ImGui::Text("Current Move List: \n%s",
               movesToString(game->getMoves()).c_str());
 
