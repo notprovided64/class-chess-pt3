@@ -514,13 +514,13 @@ void Chess::setGameFromFEN(const std::string &string) {
   _castle_status = 0;
   if (castle[0] != '-') {
     if (castle.find('K') != std::string::npos) {
-      _castle_status &= CastleStatus::K;
+      _castle_status |= CastleStatus::K;
     } else if (castle.find('Q') != std::string::npos) {
-      _castle_status &= CastleStatus::Q;
+      _castle_status |= CastleStatus::Q;
     } else if (castle.find('k') != std::string::npos) {
-      _castle_status &= CastleStatus::k;
+      _castle_status |= CastleStatus::k;
     } else if (castle.find('q') != std::string::npos) {
-      _castle_status &= CastleStatus::q;
+      _castle_status |= CastleStatus::q;
     }
   }
 
