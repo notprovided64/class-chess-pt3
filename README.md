@@ -1,5 +1,14 @@
 # Chess AI Implementation Project
 
+## Assignment Part 2
+### things updated
+ - en passant functionality
+ - castling functionality 
+ - pawn promotion
+ - setting board from FEN
+
+also rewrote a bunch of my previous code, since I relied on the display bits and their gametags for move calculations. in the context of running an efficient engine this was a horrible idea and changing it to rely on a state string (which can be passed through recursive functions) has cleared a lot up for me. probably should've relied more on the code from the chess video but now I have a better understanding of why you would write your functions like this instead of relying entirely on member variables. 
+
 screenshot of functional movelist and starting board
 ![Scrot](https://raw.githubusercontent.com/notprovided64/class-chess-123/main/scrot.png)
 
