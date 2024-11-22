@@ -4,6 +4,8 @@
 /bin
 /CMakeFiles
 /CMakeCache.txt
+/tictactoe.dir
+/x64
 
 # Ignore executables
 *.exe
@@ -21,6 +23,7 @@
 *.log
 Makefile
 cmake_install.cmake
+imgui.ini
 
 # Visual Studio Code specific files
 .vscode/
