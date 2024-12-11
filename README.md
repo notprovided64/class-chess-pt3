@@ -1,4 +1,11 @@
 # Chess AI Implementation Project
+## Assignment Part 3
+### new features
+ - negamax ai with ab pruning added
+    - can play as both sides hopefully
+
+### ai
+long winded explanation of challenged faced in implementation, depth achieved, and how well the bot plays
 
 ## Assignment Part 2
 ### things updated
