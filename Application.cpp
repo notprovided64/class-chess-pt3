@@ -50,7 +50,7 @@ void RenderGame() {
   ImGui::End();
 
   ImGui::Begin("GameWindow");
-  game->updateAI();
+  /*game->updateAI(); // uncomment for ai vs ai lol*/
   game->drawFrame();
   ImGui::End();
 }

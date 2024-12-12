@@ -122,8 +122,8 @@ void Chess::setUpBoard() {
   }
 
   /*setGameFromFEN("r3k4r/1b4bq/8/8/8/8/7B/R3K4R b KQkq - 0 1");*/
-  /*setGameFromFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR");*/
-  setGameFromFEN("4k3/8/8/8/8/8/8/RRBQKBRR");
+  setGameFromFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR");
+  /*setGameFromFEN("4k3/8/8/8/8/8/8/RRBQKBRR");*/
   _board.state = stateString();
 
   generateMoves();
@@ -401,8 +401,6 @@ void Chess::makeMove(Move move) {
 // this is the function that will be called by the AI
 //
 void Chess::updateAI() {
-  if (!(gameHasAI() && getCurrentPlayer() && getCurrentPlayer()->isAIPlayer()))
-    return;
   if (_winner != nullptr)
     return;
 
