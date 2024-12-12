@@ -41,11 +41,12 @@ bool isSlidingPiece(ChessPiece piece);
 //
 class Board {
 private:
-  std::vector<Move> GeneratePawnMoves(int index);
-  std::vector<Move> GenerateSlidingMoves(ChessPiece piece, int index);
-  std::vector<Move> GenerateKnightMoves(int index);
-  std::vector<Move> GenerateKingMoves(int index);
-  std::vector<Move> GenerateCastlingMoves(int index);
+  void GeneratePawnMoves(int index, std::vector<Move> &moves);
+  void GenerateSlidingMoves(ChessPiece piece, int index,
+                            std::vector<Move> &moves);
+  void GenerateKnightMoves(int index, std::vector<Move> &moves);
+  void GenerateKingMoves(int index, std::vector<Move> &moves);
+  void GenerateCastlingMoves(int index, std::vector<Move> &moves);
 
   bool isEmpty(int index) const;
   bool isFriendly(int index) const;
@@ -61,9 +62,13 @@ private:
   void handleEnpas(int endSquare, bool isWhiteTurn);
   void handlePromotion(int startSquare, int endSquare, bool isWhiteTurn);
 
+  std::vector<Move> GenerateMoves();
+
 public:
   std::vector<Move> GenerateLegalMoves();
-  std::vector<Move> GenerateMoves(); // make priv later
+  int evaluate(Board *board);
+  int negamax(Board *board, int depth, int alpha, int beta, int playerColor);
+  Move selectBestMove(Board *board, int depth);
 
   void makeMove(Move move);
 
@@ -72,3 +77,5 @@ public:
   int enPassantIndex = 64;
   bool isWhiteTurn = true;
 };
+
+Move selectBestMove(Board *board, int depth);

@@ -35,6 +35,8 @@ constexpr auto squaresToEdge = setupsquares_to_edge();
 // overall this class might not be needed, you could just handle all of this
 // directly on the board
 
+// bottleneck with a bunch of things i could change to improve performance
+//
 std::vector<Move> Board::GenerateLegalMoves() {
   std::vector<Move> legalMoves;
   auto pseudoLegalMoves = GenerateMoves();
@@ -60,14 +62,6 @@ std::vector<Move> Board::GenerateLegalMoves() {
   return legalMoves;
 }
 
-// questionable behaviour
-std::vector<Move> operator+=(std::vector<Move> &a, const std::vector<Move> &b) {
-  a.insert(a.end(), b.begin(), b.end());
-  return a;
-}
-
-// this should be refactored to remove dependance on the moves member variable
-// (which should be removed)
 std::vector<Move> Board::GenerateMoves() {
   std::vector<Move> moves;
   for (int i = 0; i < 64; i++) {
@@ -79,30 +73,27 @@ std::vector<Move> Board::GenerateMoves() {
     case NoPiece:
       continue;
     case Pawn:
-      moves += GeneratePawnMoves(i);
+      GeneratePawnMoves(i, moves);
       break;
     case Knight:
-      moves += GenerateKnightMoves(i);
+      GenerateKnightMoves(i, moves);
       break;
     case Bishop:
     case Rook:
     case Queen:
-      moves += GenerateSlidingMoves(piece, i);
+      GenerateSlidingMoves(piece, i, moves);
       break;
     case King:
-      moves += GenerateKingMoves(i);
+      GenerateKingMoves(i, moves);
       break;
     default:
       break;
     }
   }
-
   return moves;
 }
 
-std::vector<Move> Board::GeneratePawnMoves(int index) {
-  std::vector<Move> moves;
-
+void Board::GeneratePawnMoves(int index, std::vector<Move> &moves) {
   int north_free = squaresToEdge[index][0];
   int south_free = squaresToEdge[index][1];
   int west_free = squaresToEdge[index][2];
@@ -118,7 +109,7 @@ std::vector<Move> Board::GeneratePawnMoves(int index) {
   bool inStartingRank = index / 8 == startingRank;
 
   if (freeMoveSquares < 1)
-    return moves;
+    return;
 
   int target_index = index + baseMovementOffset;
   if (isEmpty(target_index)) {
@@ -141,13 +132,10 @@ std::vector<Move> Board::GeneratePawnMoves(int index) {
     if (isOpponent(target_index) || (target_index == enPassantIndex))
       moves.push_back(Move{index, target_index});
   }
-
-  return moves;
 }
 
-std::vector<Move> Board::GenerateSlidingMoves(ChessPiece piece, int index) {
-  std::vector<Move> moves;
-
+void Board::GenerateSlidingMoves(ChessPiece piece, int index,
+                                 std::vector<Move> &moves) {
   int start_dir_index = (piece == Bishop) ? 4 : 0;
   int end_dir_index = (piece == Rook) ? 4 : 8;
 
@@ -166,13 +154,9 @@ std::vector<Move> Board::GenerateSlidingMoves(ChessPiece piece, int index) {
       moves.push_back(Move{index, target_index});
     }
   }
-
-  return moves;
 }
 
-std::vector<Move> Board::GenerateKnightMoves(int index) {
-  std::vector<Move> moves;
-
+void Board::GenerateKnightMoves(int index, std::vector<Move> &moves) {
   int north_free = squaresToEdge[index][0];
   int south_free = squaresToEdge[index][1];
   int west_free = squaresToEdge[index][2];
@@ -217,12 +201,9 @@ std::vector<Move> Board::GenerateKnightMoves(int index) {
       tryAddMove(-10); // west-west-south
     }
   }
-
-  return moves;
 }
 
-std::vector<Move> Board::GenerateKingMoves(int index) {
-  std::vector<Move> moves;
+void Board::GenerateKingMoves(int index, std::vector<Move> &moves) {
   auto tryAddMove = [&](int offset) {
     int target_index = index + offset;
     if (!isFriendly(target_index)) {
@@ -236,13 +217,10 @@ std::vector<Move> Board::GenerateKingMoves(int index) {
     }
   }
 
-  moves += GenerateCastlingMoves(index);
-  return moves;
+  GenerateCastlingMoves(index, moves);
 }
 
-std::vector<Move> Board::GenerateCastlingMoves(int index) {
-  std::vector<Move> moves;
-
+void Board::GenerateCastlingMoves(int index, std::vector<Move> &moves) {
   // TODO check pieceiswhite here
   auto tryAddMove = [&](bool isRight) {
     int limit = isRight ? squaresToEdge[index][3] : squaresToEdge[index][2];
@@ -270,8 +248,6 @@ std::vector<Move> Board::GenerateCastlingMoves(int index) {
       tryAddMove(false);
     }
   }
-
-  return moves;
 }
 
 bool Board::isEmpty(int index) const {

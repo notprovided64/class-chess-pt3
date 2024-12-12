@@ -404,15 +404,5 @@ void Chess::updateAI() {
   if (_winner != nullptr)
     return;
 
-  auto moves = getCurrentMoves();
-  if (moves.size() == 0)
-    return;
-
-  std::random_device rd;
-  std::mt19937 gen(rd());
-  std::uniform_int_distribution<> dis(0, moves.size() - 1);
-
-  int randomIndex = dis(gen);
-
-  makeMove(moves[randomIndex]);
+  makeMove(selectBestMove(&_board, 3));
 }

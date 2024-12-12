@@ -58,6 +58,7 @@ add_executable(tictactoe Application.cpp
                           classes/Chess.cpp
                           classes/Board.cpp
                           classes/MoveGenerator.cpp
+                          classes/Negamax.cpp
                           ${MAIN_FILE}
                           ${IMPL_FILE}
                 )
