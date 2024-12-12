@@ -32,10 +32,10 @@ void RenderGame() {
   ImGui::Text("Current Player Number: %d",
               game->getCurrentPlayer()->playerNumber());
   ImGui::Text("Current BoardState: \n%s", game->stateStringPretty().c_str());
-  ImGui::Text("Castling State: %d", game->getCS());
-  ImGui::Text("Enpas Index: %d", game->getEnpasIndex());
+  ImGui::Text("Castling State: %d", game->getCastlingStatus());
+  ImGui::Text("Enpas Index: %d", game->getEnPassantIndex());
   ImGui::Text("Current Move List: \n%s",
-              movesToString(game->getMoves()).c_str());
+              movesToString(game->getCurrentMoves()).c_str());
 
   if (gameOver) {
     ImGui::Text("Game Over!");
@@ -50,6 +50,7 @@ void RenderGame() {
   ImGui::End();
 
   ImGui::Begin("GameWindow");
+  game->updateAI();
   game->drawFrame();
   ImGui::End();
 }
@@ -69,4 +70,5 @@ void EndOfTurn() {
     gameWinner = -1;
   }
 }
+
 } // namespace ClassGame

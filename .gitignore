@@ -17,6 +17,7 @@
 *.dll
 *.so
 *.dylib
+tictactoe
 
 # Ignore generated files
 *.cmake

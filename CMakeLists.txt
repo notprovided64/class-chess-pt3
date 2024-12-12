@@ -56,6 +56,8 @@ add_executable(tictactoe Application.cpp
                           classes/Square.cpp
                           classes/ChessSquare.cpp
                           classes/Chess.cpp
+                          classes/Board.cpp
+                          classes/MoveGenerator.cpp
                           ${MAIN_FILE}
                           ${IMPL_FILE}
                 )
@@ -69,6 +71,9 @@ elseif(WINDOWS)
         target_link_libraries(tictactoe dwmapi)
     endif()
 endif()
+
+#remove later
+set(CMAKE_BUILD_TYPE Debug)
 
 # Set the project for packaging
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
