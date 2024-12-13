@@ -7,6 +7,8 @@
 ### ai
 the largest challenge in implementing this functionality was refactoring my chess logic to be more separate than it was previously with my Board.cpp class. after a lot of moving things around, and rewritting my move generation to do a lot less empty work, the actual logic for implementing negamax came fairly easily due to our previous implementation as a class. i took inspiration from Sebastian Lague's implementation when it comes to evaluating the board, with overlays that gives certain pieces more value depending on where they are. in terms of having a playable experience, without further optimization a depth of 3 is best. the AI plays notably better than random, taking care to not haplessly lose pieces and look for decent value.
 
+video: https://youtu.be/JHmZlynN2K0
+
 ## Assignment Part 2
 ### things updated
  - en passant functionality
